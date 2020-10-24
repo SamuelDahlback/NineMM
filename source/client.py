@@ -130,7 +130,7 @@ def main(hostIP, port):
                     theBoard.opponent_remove_piece(remove_own_coord, 0)
 
 
-                print("Opponent says game is finished)
+                print("Opponent says game is finished")
                 myResult = input("Did you win or not?(WIN, LOSS, TIE):")
                 myMSG = myResult + "|"
                 #Send my result
