@@ -3,6 +3,11 @@ import server
 import client
 from threading import Thread,Lock
 import socket, sys
+import game_platform
+import time
+import os
+import sys
+
 
 class Menu:
     """Menu that defines string outputs for different menus"""
@@ -28,8 +33,8 @@ class Menu:
         :return: Main menu string
         :rtype: String
         """
-        self.menu = "MAIN MENU \n * [S]tart new server\n * [C]onnect to server\n * [Q]uit"
-        self.validInput = "scq"
+        self.menu = "MAIN MENU \n * [S]tart new server\n * [C]onnect to server\n * [B]ack\n * [Q]uit"
+        self.validInput = "scqb"
         return self.menu
 
     def startServer(self):
@@ -161,7 +166,7 @@ def startGame(minPlayers, maxPlayers):
     PORT = 65432        # The port used by the host client
     client.main(HOST, PORT)
 
-def main():
+def online_menu():
     """Main function that handles user actions.
     """
     menu = Menu()
@@ -178,6 +183,256 @@ def main():
     elif choice == "c":
         address = menu.connectServer()
         client.main(address, 65432)
+    elif choice == 'b':
+        main_menu(False)
+
+def clear():
+    os.system("cls")
+
+# Setting Functions------------------------------------------------------------------------------------------------------
+def settings(ACTIVE_GAME):
+    clear()
+    print()
+    print("\t\t\t\t  _________       __    __  .__                      ")
+    print("\t\t\t\t /   _____/ _____/  |__/  |_|__| ____    ____  ______")
+    print("\t\t\t\t \_____  \_/ __ \   __\   __\  |/    \  / ___\/  ___/")
+    print("\t\t\t\t /        \  ___/|  |  |  | |  |   |  \/ /_/  >___ \ ")
+    print("\t\t\t\t/_______  /\___  >__|  |__| |__|___|  /\___  /____  >")
+    print("\t\t\t\t        \/     \/                   \//_____/     \/ ")
+    print()
+    print("\t\t\t\t      Enter 1 Change Names")
+    print("\t\t\t\t      Enter 2 Change Figures")
+    print("\t\t\t\t      Enter 3 to go back to menu")
+    print()
+    print("\t\t\t\t  ---------------------------------------------")
+    print("\t\t\t\t\t\t     UU-Studios©")
+    print("\t\t\t\t  ---------------------------------------------")
+
+    while True:
+        try:
+            choice = int(input("\t\t\t\t\t  Enter your choice: "))
+            break
+        except ValueError:
+            print("\t\t\tNot a valid option. Try Again!")
+
+    if choice == 1:
+        change_name(ACTIVE_GAME)
+    elif choice == 2:
+        change_figure(ACTIVE_GAME)
+    elif choice == 3:
+        clear()
+        main_menu(ACTIVE_GAME)
+
+
+def change_name(ACTIVE_GAME):
+    i = 1
+    for player in theBoard.players:
+        player.name = input("Type player " + str(i) + " name: ")
+        i = i + 1
+    settings(ACTIVE_GAME)
+
+
+def change_figure(ACTIVE_GAME):
+    for player in PLAYERS:
+        player.figure = input(player.name + " figure: ")
+    settings(ACTIVE_GAME)
+
+# Hardcoded data---------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+# Graphics Functions-----------------------------------------------------------------------------------------------------
+def print_title():
+    clear()
+    time.sleep(3)
+    print()
+    print("\t\t\t\t   _   _ _   _      ____  _             _ _               ")
+    print("\t\t\t\t  | | | | | | |    / ___|| |_ _   _  __| (_) ___  ___     ")
+    print("\t\t\t\t  | | | | | | |____\___ \| __| | | |/ _` | |/ _ \/ __|    ")
+    print("\t\t\t\t  | |_| | |_| |_____|__) | |_| |_| | (_| | | (_) \__ \    ")
+    print("\t\t\t\t   \___/ \___/     |____/ \__|\__,_|\__,_|_|\___/|___/    ")
+    print()
+    print()
+    print("\t\t\t\t\t ____                           _       _ _ ")
+    print("\t\t\t\t\t|  _ \ _ __ ___  ___  ___ _ __ | |_ ___| | |")
+    print("\t\t\t\t\t| |_) | '__/ _ \/ __|/ _ \ '_ \| __/ __| | |")
+    print("\t\t\t\t\t|  __/| | |  __/\__ \  __/ | | | |_\__ \_|_|")
+    print("\t\t\t\t\t|_|   |_|  \___||___/\___|_| |_|\__|___(_|_)")
+    time.sleep(1)
+    print()
+    print("\t\t\t\t _   _ _   _              ____                      _ _  ")
+    print("\t\t\t\t| | | | | | |  ______    / ___| __ _ _ __ ___   ___| | | ")
+    print("\t\t\t\t| | | | | | | |______|  | |  _ / _` | '_ ` _ \ / _ \ | | ")
+    print("\t\t\t\t| |_| | |_| |           | |_| | (_| | | | | | |  __/_|_| ")
+    print("\t\t\t\t\____/\____/             \____|\__,_|_| |_| |_|\___(_|_) ")
+    print("\t")
+    time.sleep(2)
+    clear()
+    print("\t")
+    print("\t\t   ___  ___  ___  ___                 ________  ________  _____ ______   _______      ")
+    print("\t\t  |\  \|\  \|\  \|\  \               |\   ____\|\   __  \|\   _ \  _   \|\  ___ \     ")
+    print("\t\t  \ \  \\\  \ \  \\\  \  ____________\ \  \___|\ \  \|\  \ \  \\\__\ \  \ \   __/|    ")
+    print("\t\t   \ \  \\\  \ \  \\\  \|\____________\ \  \  __\ \   __  \ \  \\|__| \  \ \  \_|/__  ")
+    print("\t\t    \ \  \\\  \ \  \\\  \|____________|\ \  \|\  \ \  \ \  \ \  \    \ \  \ \  \_|\ \ ")
+    print("\t\t     \ \_______\ \_______\              \ \_______\ \__\ \__\ \__\    \ \__\ \_______\ ")
+    print("\t\t      \|_______|\|_______|               \|_______|\|__|\|__|\|__|     \|__|\|_______|")
+    print("\t")
+    print()
+
+def settings(ACTIVE_GAME):
+    clear()
+    print()
+    print("\t\t\t\t  _________       __    __  .__                      ")
+    print("\t\t\t\t /   _____/ _____/  |__/  |_|__| ____    ____  ______")
+    print("\t\t\t\t \_____  \_/ __ \   __\   __\  |/    \  / ___\/  ___/")   
+    print("\t\t\t\t /        \  ___/|  |  |  | |  |   |  \/ /_/  >___ \ ") 
+    print("\t\t\t\t/_______  /\___  >__|  |__| |__|___|  /\___  /____  >") 
+    print("\t\t\t\t        \/     \/                   \//_____/     \/ ")
+    print()
+    print("\t\t\t\t      Enter 1 Change Names")
+    print("\t\t\t\t      Enter 2 Change Figures")
+    print("\t\t\t\t      Enter 3 to go back to menu")
+    print()
+    print("\t\t\t\t  ---------------------------------------------")
+    print("\t\t\t\t\t\t     UU-Studios")
+    print("\t\t\t\t  ---------------------------------------------")
+
+    while True:
+        try:
+            choice = int(input("\t\t\t\t\t  Enter your choice: "))
+            break
+        except ValueError:
+            print("\t\t\tNot a valid option. Try Again!")
+
+    if choice == 1:
+        change_name(ACTIVE_GAME)
+    elif choice == 2:
+        change_figure(ACTIVE_GAME)
+    elif choice == 3:
+        clear()
+        main_menu(ACTIVE_GAME)
+
+
+
+
+def main_menu(ACTIVE_GAME):
+    print("\t\t\t\t\t  ---------------------------------------------")
+    print("\t\t\t\t\t\t\t   MAIN MENU")
+    print("\t\t\t\t\t  ---------------------------------------------")
+    if ACTIVE_GAME:
+        print("\t\t\t\t\t\t      Enter 0 to Resume game")
+
+    print("\t\t\t\t\t\t      Enter 1 to Start local game")
+    print("\t\t\t\t\t\t      Enter 2 to Start or join an online game")
+    print("\t\t\t\t\t\t      Enter 3 for How to Play")
+    print("\t\t\t\t\t\t      Enter 4 for Settings")
+    print("\t\t\t\t\t\t      Enter 5 to Quit")
+    print()
+    print("\t\t\t\t\t  ---------------------------------------------")
+    print("\t\t\t\t\t\t         UU-Studios©")
+    print("\t\t\t\t\t  ---------------------------------------------")
+
+    while True:
+        try:
+            choice = int(input("\t\t\t\t\t  Enter your choice: "))
+            break
+        except ValueError:
+            print("\t\t\tNot a valid option. Try Again!")
+
+    if choice == 0 and ACTIVE_GAME:
+        play(True)
+    elif choice == 1:
+        play(False)
+    elif choice == 2:
+        print('play online')
+        online_menu()
+        #implement commplatform menu
+    elif choice == 3:
+        rules()
+    elif choice == 4:
+        settings(ACTIVE_GAME)
+    elif choice == 5:
+        clear()
+        sys.exit()
+
+
+
+def rules():
+    clear()
+    print()
+    print("\t\t\t\t      __________      .__                 ")
+    print("\t\t\t\t      \______   \__ __|  |   ____   ______")
+    print("\t\t\t\t       |       _/  |  \  | _/ __ \ /  ___/")
+    print("\t\t\t\t       |    |   \  |  /  |_\  ___/ \___ \ ")
+    print("\t\t\t\t       |____|_  /____/|____/\___  >____  >")
+    print("\t\t\t\t              \/                \/     \/ ")
+    print("\t")
+    print("\t\t\t\t  ---------------------------------------------")
+    print("\t\t\t\t\t\t   UU-Studios©")
+    print("\t\t\t\t  ---------------------------------------------")
+    print()
+    print("\t\t 1. Choose black or white pieces. The player with black pieces will start the game.")
+    print()
+    print("\t\t 2. Place pieces on the board using the coordinate system [A1-G7]. The player will put one piece")
+    print("\t\t each turn and will place a total of 9 pieces on the board. When the player has put three pieces")
+    print("\t\t in a trio the player will be able to move a piece using the coordinate system [A1-G7]. The player")
+    print("\t\t can not move pieces from the opponent that are in a trio.")
+    print()
+    print("\t\t 3. When all pieces are placed one will be able to move the pieces between the different joints. The")
+    print("\t\t player can only move one step each turn. The goal is to create a situation where the opponent loses")
+    print("\t\t their pieces until they can no longer make any new moves or have less than three pieces left.")
+    print()
+
+    while True:
+        try:
+            choice = int(input("\t\t\t\t  Enter your 1 to go back to the Menu: "))
+            break
+        except ValueError:
+            print("\t\t\tNot a valid option. Try Again!")
+
+    if choice == 1:
+        clear()
+        main_menu(False)
+
+def change_turn(current_player):
+    for player in theBoard.players:
+        if player is not current_player:
+            player.nextTurn = True
+        else:
+            player.nextTurn = False
+
+def create_new_game():
+    create_nodes()
+    for player in PLAYERS:
+        player.pieces = []
+
+    PLAYERS[0].nextTurn = True
+    print("\n\tYou will now begin the game by placing " + str(theBoard.max_number_of_pieces) + " pieces each")
+    msg = theBoard.place_piece(player)
+
+def play(ACTIVE_GAME):
+    if not ACTIVE_GAME:
+        for player in theBoard.players:
+            player.pieces = []
+        theBoard.players[0].nextTurn = True
+        print("\n\tYou will now begin the game by placing " + str(theBoard.max_number_of_pieces) + " pieces each")
+        msg = theBoard.players_turn(theBoard.players[0], True)
+        change_turn(theBoard.players[0])
+        
+    while True:
+        for player in theBoard.players:
+            if player.nextTurn:
+                    msg = theBoard.players_turn(player,False)
+                    change_turn(player)
+            else:
+                print("Error")
 
 if __name__ == "__main__":
-    main()
+
+    theBoard = game_platform.Board(9,24)
+    #print_title()
+    main_menu(False)

@@ -2,7 +2,16 @@
 import time
 import os
 import sys
-
+from time import sleep
+import server
+import client
+from threading import Thread,Lock
+import socket, sys
+import time
+import os
+import sys
+import socket
+import select
 
 # Classes---------------------------------------------------------------------------------------------------------------
 class Singleton(type):
@@ -58,6 +67,7 @@ class Board(metaclass=Singleton):
     players = [Player("Player 1", "X", [], False), Player("Player 2", "O", [], False)]
     #pieces_placed = 0
     we_have_a_winner = False
+    online_game = False
 
     def __init__(self, max_number_of_pieces_per_player, number_of_nodes):
         self.max_number_of_pieces = max_number_of_pieces_per_player
@@ -70,7 +80,7 @@ class Board(metaclass=Singleton):
 
 
     def print_board(self):
-        clear()
+        self.clear()
         print(str(self.node_list[0].figure))
         print("\t\t\t\t   To go back to the main menu press M")
         self.print_scoreboard()
@@ -269,9 +279,10 @@ class Board(metaclass=Singleton):
     def get_input(self,input_text):
         while True:
             raw_x = input(input_text)
-            if raw_x.upper() == 'M':
-                menu(True)
-                break
+            if(self.online_game == False):
+                 if raw_x.upper() == 'M':
+                    main_menu(True)
+                    break
             x = self.coord_dictionary(raw_x.upper())
             if x is None:
                 print(raw_x + " is not a valid coordinate on the board")
@@ -296,7 +307,9 @@ class Board(metaclass=Singleton):
                 print("Error")
 
     #Called by the client if it is the players turn
-    def players_turn(self, player):
+    def players_turn(self, player, online):
+        if(online):
+            self.online_game = True
         what_stage = self.check_what_stage(player)
         if what_stage == 'stage1':
             msg = self.place_piece(player)
@@ -443,16 +456,14 @@ class Board(metaclass=Singleton):
             else:
                 return False
 
-    def get_winner(self):
-        winner = ""
-        remaining_pieces = 0
-        for player in self.players:
-            if player.pieces_left() > 2:
-                winner = player.name
-                remaining_pieces = player.pieces_left()
-                self.we_have_a_winner = True
+    def clear(self):
+        os.system("cls")
 
-        print("The winner is " + winner + " with " + str(remaining_pieces) + " pieces remaining")
+
+
+    # Setting Functions------------------------------------------------------------------------------------------------------
+
+
 
 
 
@@ -462,54 +473,185 @@ class Board(metaclass=Singleton):
 
 
 
+class Menu:
+    """Menu that defines string outputs for different menus"""
+
+    def __init__(self):
+        """[summary]
+        """
+        self.menu = ""
+        self.validInput = ""
+        self.mainMenu()
+    
+    def __str__(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
+        return self.menu
+
+    def mainMenu(self):
+        """Main menu, the inital menu that is shown to the user
+
+        :return: Main menu string
+        :rtype: String
+        """
+        self.menu = "MAIN MENU \n * [S]tart new server\n * [C]onnect to server\n * [B]ack\n * [Q]uit"
+        self.validInput = "scqb"
+        return self.menu
+
+    def startServer(self):
+        """Menu for starting a server with 1v1 or a tournament
+
+        :return: Menu of options for the user
+        :rtype: String
+        """
+        self.menu = "START NEW SERVER \n * [H]eads up play (1 vs 1)\n * [S]tart tournament"
+        self.validInput = "hs"
+
+        return self.menu
+
+    def chooseGameStyle(self):
+        """Menu for choosing how many player there should be in the tournament
+
+        :return: Menu of options for the user
+        :rtype: String
+        """
+        self.menu = "How many players? (max 8 players)"
+        self.validInput = "345678"
+
+        return self.menu    
+    
+    def connectServer(self):
+        """Connect to a tournament server by writing in the hosts IP 
+        adress in the terminal
+
+        :return: The IP adress that has been entered by the user
+        :rtype: String
+        """
+        self.menu = "CONNECT TO SERVER \n"
+        print(chr(27) + "[2J") #Clear console
+        print(self.menu) #Display menu
+        address = input("Enter host IP-address: ")
+        while True:
+            if not validateIP(address):
+                print(chr(27) + "[2J") #Clear console
+                print(self.menu) #Display menu
+                print("Error: Invalid IP-address, try again.")
+                address = input("Enter host IP-address: ")
+            else:
+                return address
+    
+    def input(self):
+        """Handles the users input when using the menu
+
+        :return: playersChoice of action
+        :rtype: String
+        """
+        print(chr(27) + "[2J") #Clear console
+        print(self.menu) #Display menu
+        while True:
+            playerChoice = input("Action: ").lower()
+            if not playerChoice or playerChoice[0] not in self.validInput:
+                print(chr(27) + "[2J") #Clear console
+                print(self.menu) #Display menu
+                print("Error: invalid input, try again")
+            else:
+                return playerChoice
+
+def validateIP(address):
+    """Returns true if a IP adress is validated 
+
+    :param address: A IP address that needs to be validated
+    :type address: String
+    :return: Whether the IP address was valid or not
+    :rtype: bool
+    """
+    def max255(s):
+        try: return str(int(s)) == s and 0 <= int(s) <= 255
+        except: return False
+    
+    if address.count(".") == 3 and all(max255(i) for i in address.split(".")):
+        return True
+    else:
+        return False
+
+
+def startServer(address, port, minPlayers, maxPlayers):
+    """Starts a server to host an online game tournament or heads-up match.
+
+    :param address: IP address of the machine the server is run on.
+    :type address: String
+    :param port: The port the server should listen to.
+    :type port: int
+    :param minPlayers: Minimum amount of players to start a tournament
+    :type minPlayers: int
+    :param maxPlayers: Minimum amount of players that can connect to the server
+    :type maxPlayers: int
+
+    """
+    server.main(address, port, minPlayers, maxPlayers)
+
+  
+def getIP():
+    """A function that returns the IP on the computer, works
+    for every operative system.
+
+    :return: The IP on the computer
+    :rtype: String
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+def startGame(minPlayers, maxPlayers):
+    """Starts a server in another thread and starts a client (host client) in the main thread which 
+    connects to the server.
+
+    :param minPlayers: Minimum amount of players to start a tournament
+    :type minPlayers: int
+    :param maxPlayers: Minimum amount of players that can connect to the server
+    :type maxPlayers: int
+    """
+
+    hostIP = getIP()
+    
+    t = Thread(target=startServer, args=(hostIP, 65432, minPlayers, maxPlayers))
+    t.start()
+    sleep(0.1)
+    HOST = hostIP   # The server's hostname or IP address
+    PORT = 65432        # The port used by the host client
+    client(HOST, PORT)
+
+def online_menu():
+    """Main function that handles user actions.
+    """
+    menu = Menu()
+    choice = menu.input()
+    if choice == "s":
+        menu.startServer()
+        choice = menu.input()
+        if(choice == "h"):
+            startGame(2,2)
+        elif(choice == "s"):
+             menu.chooseGameStyle()
+             choice = menu.input()
+             startGame(3, int(choice))
+    elif choice == "c":
+        address = menu.connectServer()
+        client(address, 65432)
+    elif choice == 'b':
+        main_menu(False)
+
 def clear():
     os.system("cls")
-
-
-# Game Functions---------------------------------------------------------------------------------------------------------
-def create_nodes():
-    for i in range(0, NUMBER_OF_NODES):
-        NODE_LIST.append(Coord(i, True, " "))
-
-
-def create_new_game():
-    create_nodes()
-    for player in PLAYERS:
-        player.pieces = []
-
-    PLAYERS[0].nextTurn = True
-    print("\n\tYou will now begin the game by placing " + str(MAX_NUMBER_OF_PIECES_PER_PLAYER) + " pieces each")
-    place_piece()
-
-
-def change_turn(current_player):
-    for player in PLAYERS:
-        if player is not current_player:
-            player.nextTurn = True
-        else:
-            player.nextTurn = False
-
-
-
-def play(ACTIVE_GAME):
-    if not ACTIVE_GAME:
-        create_new_game()
-    else:
-        while PLAYERS[0].pieces_left() > 2 and PLAYERS[1].pieces_left() > 2:
-            for player in PLAYERS:
-                if player.nextTurn:
-                    if player.pieces_left() > 3:
-                        stage_2(player)
-                    elif player.pieces_left() == 3:
-                        stage_3(player)
-                    else:
-                        print("Error")
-
-
-
-
-
-
 
 # Setting Functions------------------------------------------------------------------------------------------------------
 def settings(ACTIVE_GAME):
@@ -543,7 +685,7 @@ def settings(ACTIVE_GAME):
         change_figure(ACTIVE_GAME)
     elif choice == 3:
         clear()
-        menu(ACTIVE_GAME)
+        main_menu(ACTIVE_GAME)
 
 
 def change_name(ACTIVE_GAME):
@@ -559,77 +701,8 @@ def change_figure(ACTIVE_GAME):
         player.figure = input(player.name + " figure: ")
     settings(ACTIVE_GAME)
 
-
-# Piece Functions--------------------------------------------------------------------------------------------------------
-
-
-def place_piece():
-    for i in range(0, MAX_NUMBER_OF_PIECES_PER_PLAYER):
-        for player in PLAYERS:
-            if player.nextTurn is True:
-                while True:
-                    print_board()
-                    x = get_input(str(" " + player.name + " place a piece on an empty node (A1-G7): "))
-                    if x is not None:
-                        if x < NUMBER_OF_NODES and NODE_LIST[x].empty:
-                            player.pieces.append(Piece(x, player.name))
-                            NODE_LIST[x].figure = player.figure
-                            NODE_LIST[x].empty = False
-                            if is_trio(player, x):
-                                remove_piece(player)
-                            if x != "M":
-                                change_turn(player)
-                            break
-                        else:
-                            print("Invalid location")
-
-    play(True)
-
-
-
-
-# trio Functions---------------------------------------------------------------------------------------------------------
-def is_trio(player, pos):
-    trios = get_triolist(player, pos)
-    for trio in trios:
-        if NODE_LIST[trio[0]].figure == player.figure and NODE_LIST[trio[1]].figure == player.figure \
-                and NODE_LIST[trio[2]].figure == player.figure:
-            return True
-    return False
-
-
 # Hardcoded data---------------------------------------------------------------------------------------------------------
 
-
-
-def adjacent_nodes(pos):
-    adjacent = [None] * NUMBER_OF_NODES
-    adjacent[0] = [1, 9]
-    adjacent[1] = [0, 2, 4]
-    adjacent[2] = [1, 14]
-    adjacent[3] = [4, 10]
-    adjacent[4] = [1, 3, 5, 7]
-    adjacent[5] = [4, 13]
-    adjacent[6] = [7, 11]
-    adjacent[7] = [4, 6, 8]
-    adjacent[8] = [7, 12]
-    adjacent[9] = [0, 10, 21]
-    adjacent[10] = [3, 9, 11, 18]
-    adjacent[11] = [6, 10, 15]
-    adjacent[12] = [8, 13, 17]
-    adjacent[13] = [5, 12, 14, 20]
-    adjacent[14] = [2, 23]
-    adjacent[15] = [11, 16]
-    adjacent[16] = [15, 17, 19]
-    adjacent[17] = [12, 16]
-    adjacent[18] = [10, 19]
-    adjacent[19] = [16, 18, 20, 22]
-    adjacent[20] = [13, 19]
-    adjacent[21] = [9, 22]
-    adjacent[22] = [19, 21, 23]
-    adjacent[23] = [14, 22]
-
-    return adjacent[pos]
 
 
 
@@ -705,22 +778,23 @@ def settings(ACTIVE_GAME):
         change_figure(ACTIVE_GAME)
     elif choice == 3:
         clear()
-        menu(ACTIVE_GAME)
+        main_menu(ACTIVE_GAME)
 
 
 
 
-def menu(ACTIVE_GAME):
+def main_menu(ACTIVE_GAME):
     print("\t\t\t\t\t  ---------------------------------------------")
     print("\t\t\t\t\t\t\t   MAIN MENU")
     print("\t\t\t\t\t  ---------------------------------------------")
     if ACTIVE_GAME:
         print("\t\t\t\t\t\t      Enter 0 to Resume game")
 
-    print("\t\t\t\t\t\t      Enter 1 to Start New game")
-    print("\t\t\t\t\t\t      Enter 2 for How to Play")
-    print("\t\t\t\t\t\t      Enter 3 for Settings")
-    print("\t\t\t\t\t\t      Enter 4 to Quit")
+    print("\t\t\t\t\t\t      Enter 1 to Start local game")
+    print("\t\t\t\t\t\t      Enter 2 to Start or join an online game")
+    print("\t\t\t\t\t\t      Enter 3 for How to Play")
+    print("\t\t\t\t\t\t      Enter 4 for Settings")
+    print("\t\t\t\t\t\t      Enter 5 to Quit")
     print()
     print("\t\t\t\t\t  ---------------------------------------------")
     print("\t\t\t\t\t\t         UU-Studios©")
@@ -738,12 +812,17 @@ def menu(ACTIVE_GAME):
     elif choice == 1:
         play(False)
     elif choice == 2:
-        rules()
+        print('play online')
+        online_menu()
+        #implement commplatform menu
     elif choice == 3:
-        settings(ACTIVE_GAME)
+        rules()
     elif choice == 4:
+        settings(ACTIVE_GAME)
+    elif choice == 5:
         clear()
         sys.exit()
+
 
 
 def rules():
@@ -781,7 +860,7 @@ def rules():
 
     if choice == 1:
         clear()
-        menu(False)
+        main_menu(False)
 
 def change_turn(current_player):
     for player in theBoard.players:
@@ -790,35 +869,171 @@ def change_turn(current_player):
         else:
             player.nextTurn = False
 
-def create_new_game():
-    create_nodes()
-    for player in PLAYERS:
-        player.pieces = []
-
-    PLAYERS[0].nextTurn = True
-    print("\n\tYou will now begin the game by placing " + str(theBoard.max_number_of_pieces) + " pieces each")
-    msg = theBoard.place_piece(player)
-
 def play(ACTIVE_GAME):
     if not ACTIVE_GAME:
         for player in theBoard.players:
             player.pieces = []
         theBoard.players[0].nextTurn = True
         print("\n\tYou will now begin the game by placing " + str(theBoard.max_number_of_pieces) + " pieces each")
-        msg = theBoard.players_turn(theBoard.players[0])
+        msg = theBoard.players_turn(theBoard.players[0], False)
         change_turn(theBoard.players[0])
         
     while True:
         for player in theBoard.players:
             if player.nextTurn:
-                    msg = theBoard.place_piece(player)
+                    msg = theBoard.players_turn(player, False)
                     change_turn(player)
             else:
                 print("Error")
 
+def client(hostIP, port):
+    theBoard = Board(9,24)
+    """This is right now fake playing some board game, so we
+    can later on itegrate a real board game here. All moves sent should start with
+    "MOV" + (the move) and if the game is finished "FIN" + ("WIN","LOSS" or "TIE")
+
+    :param hostIP: The server IP-address
+    :type hostIP: string
+    :param port: The port
+    :type port: int
+    """
+    #connect to the server
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.connect((hostIP, port))
+
+    while True:
+        #wait on and receive data from server
+        recv_data = s.recv(1024)
+
+        #If the recieved data is empty, we have lost connection.
+        if len(recv_data)==0:
+            print("\nDisconnected from the server.")
+            s.close()
+            break
+        
+        #Decode the bytelike object
+        recv_data = recv_data.decode()
+
+        #Split up the data where "|" occurs because the data can
+        #include numerous messages.
+        dataArray = recv_data.split(sep="|")
+        for data in dataArray:
+            #We should make the first move in the game(This also indicates what 
+            # colour we are!)
+            if (data[0:3] == 'FMV'):
+                print(data[3:])
+                myMov = theBoard.players_turn(theBoard.players[0], True)
+                #update our game board after we make a move
+                myMSG = myMov + "|"
+                #Send my move
+                _, _, _ = select.select([], [s], [])
+                s.sendall(myMSG.encode())
+
+            #Recieved a placement move from opponent
+            if (data[0:3] == 'PLA'):
+                print("opponents move: " + data[3:5])
+                move = data[3:]
+                if len(move) == 4:
+                    print(move[2:])
+                    print(move[0:2])
+                    remove_coord = theBoard.convert_to_coord(move[2:])
+                    theBoard.opponent_remove_piece(remove_coord, 0)
+                    move_coord = theBoard.convert_to_coord(move[0:2])
+                    theBoard.place_opponent(move_coord)
+                elif len(move) == 2:
+                    coord = theBoard.convert_to_coord(move)
+                    theBoard.place_opponent(coord)
+                #update game board here after recieving move
+
+                myMov = theBoard.players_turn(theBoard.players[0], True)
+                #update our game board after we make a move
+                myMSG =  myMov + "|"
+                #Send my move
+                _, _, _ = select.select([], [s], [])
+                s.sendall(myMSG.encode())
+
+            #Received a move from the opponent. Frist we check if opponent have also removed a piece of ours then perform action
+            if (data[0:3] == 'MOV'):
+                move = data[3:]
+
+                #if message length is = 6 we need to move a piece and then remove one of our pieces
+                if len(move) == 6:
+                    print(move[2:])
+                    print(move[0:2])
+                    #get coord of the piece that is moving and remove from board
+                    remove_own_coord = theBoard.convert_to_coord(move[0:2])
+                    theBoard.opponent_remove_piece(remove_own_coord, 1)
+
+                    #Update board with new pos of opponents piece 
+                    move_coord = theBoard.convert_to_coord(move[2:4])
+                    theBoard.place_opponent(move_coord)
+
+                    #Remove our piece
+                    remove_own_coord = theBoard.convert_to_coord(move[4:6])
+                    theBoard.opponent_remove_piece(remove_own_coord, 0)
+                
+                #If message length = 4 we only need to move a piece
+                elif len(move) == 4:
+                    #get coord of the piece that is moving and remove from board
+                    remove_own_coord = theBoard.convert_to_coord(move[0:2])
+                    theBoard.opponent_remove_piece(remove_own_coord, 1)
+
+                    #Update board with new pos of opponents piece 
+                    move_coord = theBoard.convert_to_coord(move[2:4])
+                    theBoard.place_opponent(move_coord)
+            
+                myMov = theBoard.players_turn(theBoard.players[0], True)
+                #update our game board after we make a move
+                myMSG =  myMov + "|"
+                #Send my move
+                _, _, _ = select.select([], [s], [])
+                s.sendall(myMSG.encode())
+                    
+
+            
+            #opponent says game is finished
+            if (data[0:3] == 'FIN'):
+                move = data[3:]
+
+                #if message length is = 6 we need to move a piece and then remove one of our pieces
+                if len(move) == 6:
+                    print(move[2:])
+                    print(move[0:2])
+                    #get coord of the piece that is moving and remove from board
+                    remove_own_coord = theBoard.convert_to_coord(move[0:2])
+                    theBoard.opponent_remove_piece(remove_own_coord, 1)
+
+                    #Update board with new pos of opponents piece 
+                    move_coord = theBoard.convert_to_coord(move[2:4])
+                    theBoard.place_opponent(move_coord)
+
+                    #Remove our piece
+                    remove_own_coord = theBoard.convert_to_coord(move[4:6])
+                    theBoard.opponent_remove_piece(remove_own_coord, 0)
 
 
-#Global Variables------------------------------------------------------------------------------------------------------
+                print("Opponent says game is finished")
+                myResult = input("Did you win or not?(WIN, LOSS, TIE):")
+                myMSG = myResult + "|"
+                #Send my result
+                _, _, _ = select.select([], [s], [])
+                s.sendall(myMSG.encode())
+
+            #Recieved a message from the server.
+            if (data[0:3] == 'MSG'):
+                print(data[3:])
+
+
 theBoard = Board(9,24)
-print_title()
-menu(False)
+    #print_title()
+main_menu(False)
+
+
+
+
+
+#Global Variables------------------------------------------------------------------------------------------------------#
+#theBoard = Board(9,24)
+#print_title()
+#main_menu(False)
