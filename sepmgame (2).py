@@ -10,10 +10,6 @@ class Player:
         self.name = name  # Black/White
         self.figure = figure  # X/O
         self.pieces = pieces  # Piece list
-        self.nextTurn = nextTurn  # True/False
-
-    def __eq__(self, other):
-        return self.name == other.name
 
     def pieces_left(self):
         return len(self.pieces)
