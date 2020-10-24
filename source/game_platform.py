@@ -21,6 +21,7 @@ class Singleton(type):
         return cls._instance
 
 class Player:
+    pieces_placed = 0
     def __init__(self, name, figure, pieces, nextTurn):
         self.name = name  # Black/White
         self.figure = figure  # X/O
@@ -54,8 +55,8 @@ class Board(metaclass=Singleton):
     #The following variables should be moved so that you can start both local and online games
     node_list = []
     MENU_SHORTCUT = "M"
-    players = [Player("You", "X", [], False), Player("Opponent", "O", [], False)]
-    pieces_placed = 0
+    players = [Player("Player 1", "X", [], False), Player("Player 2", "O", [], False)]
+    #pieces_placed = 0
     we_have_a_winner = False
 
     def __init__(self, max_number_of_pieces_per_player, number_of_nodes):
@@ -190,13 +191,13 @@ class Board(metaclass=Singleton):
             (pos,msg) = self.get_input(str("Place a piece on an empty node (A1-G7): "))
             if pos is not None:
                 if pos < self.number_of_nodes and self.node_list[pos].empty:
-                    self.players[player].pieces.append(Piece(pos, self.players[player].name))
-                    self.node_list[pos].figure = self.players[player].figure
+                    player.pieces.append(Piece(pos, player.name))
+                    self.node_list[pos].figure = player.figure
                     self.node_list[pos].empty = False
                     self.print_board()
-                    self.pieces_placed +=1
-                    if self.is_trio(self.players[player], pos):
-                       remove_msg = self.remove_piece(self.players[player])
+                    player.pieces_placed +=1
+                    if self.is_trio(player, pos):
+                       remove_msg = self.remove_piece(player)
                        return msg + remove_msg
                     
                     return msg
@@ -283,13 +284,13 @@ class Board(metaclass=Singleton):
         return coord
 
     #Checks what  stage the game is in and returns it as a String. Should be redone to stop using Strings
-    def check_what_stage(self,player_num):
-        if self.pieces_placed <= 8:
+    def check_what_stage(self,player):
+        if player.pieces_placed <= self.max_number_of_pieces-1:
                 return 'stage1'
         if self.players[0].pieces_left() > 2 and self.players[1].pieces_left() > 2:
-            if self.players[player_num].pieces_left() > 3:
+            if  player.pieces_left() > 3:
                 return 'stage2'
-            elif self.players[player_num].pieces_left() == 3:
+            elif player.pieces_left() == 3:
                 return 'stage3'
             else:
                 print("Error")
@@ -298,13 +299,13 @@ class Board(metaclass=Singleton):
     def players_turn(self, player):
         what_stage = self.check_what_stage(player)
         if what_stage == 'stage1':
-            msg = self.place_piece(0)
+            msg = self.place_piece(player)
             return 'PLA' + msg
         elif what_stage == 'stage2':
-            msg = self.stage_2(self.players[player])
+            msg = self.stage_2(player)
             return 'MOV' + msg
         elif what_stage == 'stage3':
-            msg = self.stage_3(self.players[player])
+            msg = self.stage_3(player)
             #self.get_winner()
             if(self.we_have_a_winner):
                 return 'FIN' + msg
@@ -547,7 +548,7 @@ def settings(ACTIVE_GAME):
 
 def change_name(ACTIVE_GAME):
     i = 1
-    for player in PLAYERS:
+    for player in theBoard.players:
         player.name = input("Type player " + str(i) + " name: ")
         i = i + 1
     settings(ACTIVE_GAME)
@@ -673,6 +674,39 @@ def print_title():
     print("\t")
     print()
 
+def settings(ACTIVE_GAME):
+    clear()
+    print()
+    print("\t\t\t\t  _________       __    __  .__                      ")
+    print("\t\t\t\t /   _____/ _____/  |__/  |_|__| ____    ____  ______")
+    print("\t\t\t\t \_____  \_/ __ \   __\   __\  |/    \  / ___\/  ___/")   
+    print("\t\t\t\t /        \  ___/|  |  |  | |  |   |  \/ /_/  >___ \ ") 
+    print("\t\t\t\t/_______  /\___  >__|  |__| |__|___|  /\___  /____  >") 
+    print("\t\t\t\t        \/     \/                   \//_____/     \/ ")
+    print()
+    print("\t\t\t\t      Enter 1 Change Names")
+    print("\t\t\t\t      Enter 2 Change Figures")
+    print("\t\t\t\t      Enter 3 to go back to menu")
+    print()
+    print("\t\t\t\t  ---------------------------------------------")
+    print("\t\t\t\t\t\t     UU-Studios")
+    print("\t\t\t\t  ---------------------------------------------")
+
+    while True:
+        try:
+            choice = int(input("\t\t\t\t\t  Enter your choice: "))
+            break
+        except ValueError:
+            print("\t\t\tNot a valid option. Try Again!")
+
+    if choice == 1:
+        change_name(ACTIVE_GAME)
+    elif choice == 2:
+        change_figure(ACTIVE_GAME)
+    elif choice == 3:
+        clear()
+        menu(ACTIVE_GAME)
+
 
 
 
@@ -749,6 +783,42 @@ def rules():
         clear()
         menu(False)
 
+def change_turn(current_player):
+    for player in theBoard.players:
+        if player is not current_player:
+            player.nextTurn = True
+        else:
+            player.nextTurn = False
+
+def create_new_game():
+    create_nodes()
+    for player in PLAYERS:
+        player.pieces = []
+
+    PLAYERS[0].nextTurn = True
+    print("\n\tYou will now begin the game by placing " + str(theBoard.max_number_of_pieces) + " pieces each")
+    msg = theBoard.place_piece(player)
+
+def play(ACTIVE_GAME):
+    if not ACTIVE_GAME:
+        for player in theBoard.players:
+            player.pieces = []
+        theBoard.players[0].nextTurn = True
+        print("\n\tYou will now begin the game by placing " + str(theBoard.max_number_of_pieces) + " pieces each")
+        msg = theBoard.players_turn(theBoard.players[0])
+        change_turn(theBoard.players[0])
+        
+    while True:
+        for player in theBoard.players:
+            if player.nextTurn:
+                    msg = theBoard.place_piece(player)
+                    change_turn(player)
+            else:
+                print("Error")
 
 
-# Global Variables------------------------------------------------------------------------------------------------------
+
+#Global Variables------------------------------------------------------------------------------------------------------
+theBoard = Board(9,24)
+print_title()
+menu(False)

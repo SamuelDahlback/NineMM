@@ -40,7 +40,7 @@ def main(hostIP, port):
             # colour we are!)
             if (data[0:3] == 'FMV'):
                 print(data[3:])
-                myMov = theBoard.players_turn(0)
+                myMov = theBoard.players_turn(theBoard.players[0])
                 #update our game board after we make a move
                 myMSG = myMov + "|"
                 #Send my move
@@ -63,7 +63,7 @@ def main(hostIP, port):
                     theBoard.place_opponent(coord)
                 #update game board here after recieving move
 
-                myMov = theBoard.players_turn(0)
+                myMov = theBoard.players_turn(theBoard.players[0])
                 #update our game board after we make a move
                 myMSG =  myMov + "|"
                 #Send my move
@@ -100,7 +100,7 @@ def main(hostIP, port):
                     move_coord = theBoard.convert_to_coord(move[2:4])
                     theBoard.place_opponent(move_coord)
             
-                myMov = theBoard.players_turn(0)
+                myMov = theBoard.players_turn(theBoard.players[0])
                 #update our game board after we make a move
                 myMSG =  myMov + "|"
                 #Send my move
