@@ -234,6 +234,12 @@ class Game():
                 opponent.conn.send(recv_data.encode())
                 self.turn = abs(self.turn - 3)
                 return False
+            elif(recv_data[0:3] == 'PLA'):
+                #send the move to opponent and set the turn to the opponent.
+                opponent.conn.send(recv_data.encode())
+                self.turn = abs(self.turn - 3)
+                return False
+
 
             elif (recv_data[0:3] == 'FIN'):
                 #Send the result to opponent and call the end-method
