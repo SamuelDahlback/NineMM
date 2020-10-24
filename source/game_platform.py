@@ -468,9 +468,7 @@ class Board(metaclass=Singleton):
 
 
 
-
-# below here are functions that i yet haven't moved to the board class-----------------------------------------------------------------------------------------------------
-
+#Below are is code that was prevously in the interface file. It handles the functionality when creating an online game/tournament
 
 
 class Menu:
@@ -650,10 +648,12 @@ def online_menu():
     elif choice == 'b':
         main_menu(False)
 
+
+#Code related to accesing the menu and playing a local game-------------------------------------------------------------------
+
 def clear():
     os.system("cls")
 
-# Setting Functions------------------------------------------------------------------------------------------------------
 def settings(ACTIVE_GAME):
     clear()
     print()
@@ -701,7 +701,7 @@ def change_figure(ACTIVE_GAME):
         player.figure = input(player.name + " figure: ")
     settings(ACTIVE_GAME)
 
-# Hardcoded data---------------------------------------------------------------------------------------------------------
+
 
 
 
@@ -886,8 +886,10 @@ def play(ACTIVE_GAME):
             else:
                 print("Error")
 
+
+
+#Code that was prevously in the client file. It handles the online match
 def client(hostIP, port):
-    theBoard = Board(9,24)
     """This is right now fake playing some board game, so we
     can later on itegrate a real board game here. All moves sent should start with
     "MOV" + (the move) and if the game is finished "FIN" + ("WIN","LOSS" or "TIE")
@@ -1025,15 +1027,9 @@ def client(hostIP, port):
                 print(data[3:])
 
 
+
+
+#Creates a board object and displays the main menu 
 theBoard = Board(9,24)
-    #print_title()
+print_title()
 main_menu(False)
-
-
-
-
-
-#Global Variables------------------------------------------------------------------------------------------------------#
-#theBoard = Board(9,24)
-#print_title()
-#main_menu(False)
