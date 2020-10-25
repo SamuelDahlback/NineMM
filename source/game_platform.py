@@ -271,16 +271,16 @@ class Board(metaclass=Singleton):
 
 
     def print_scoreboard(self):
-        print("\t\t\t\t     _____________________________________")
-        print("\t\t\t\t    |                    ".ljust(45) + "|")
+        print("\t\t\t\t     ____________________________________________________")
+        print("\t\t\t\t    |                    ".ljust(60) + "|")
         print(
-            "\t\t\t\t    |    {} Has {} pieces on the board".format(self.players[0].name, self.players[0].pieces_left()).ljust(45,
+            "\t\t\t\t    |    {} Has {} pieces on the board".format(self.players[0].name, self.players[0].pieces_left()).ljust(60,
                                                                                                                      " ") + "|")
         print(
-            "\t\t\t\t    |    {} Has {} pieces on the board".format(self.players[1].name, self.players[1].pieces_left()).ljust(45,
+            "\t\t\t\t    |    {} Has {} pieces on the board".format(self.players[1].name, self.players[1].pieces_left()).ljust(60,
                                                                                                                      " ") + "|")
-        print("\t\t\t\t    |                    ".ljust(45) + "|")
-        print("\t\t\t\t    |____________________________________|")
+        print("\t\t\t\t    |                    ".ljust(60) + "|")
+        print("\t\t\t\t    |___________________________________________________|")
 
     #will return x which is the int converted from the coord_dict and raw_x which is the coordinate in the form A1
     def get_input(self,input_text):
