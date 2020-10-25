@@ -1071,5 +1071,5 @@ def client(hostIP, port):
 
 #Creates a board object and displays the main menu 
 theBoard = Board(9,24)
-#print_title()
+print_title()
 main_menu(False)
