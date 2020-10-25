@@ -236,6 +236,17 @@ class Board(metaclass=Singleton):
                 return True
 
         return False
+    
+    def removable_piece(self, player):
+        valid_pieces = []
+        for piece in player.pieces:
+            if self.check_mill(player, piece.pos) is False:
+                valid_pieces.append(piece.pos)
+        if len(valid_pieces) == 0:
+            for piece in player.pieces:
+                valid_pieces.append(piece.pos)
+
+        return valid_pieces
 
 
     def remove_piece(self, current_player):
@@ -245,17 +256,15 @@ class Board(metaclass=Singleton):
                 (piece_pos,msg) = self.get_input("Which piece do you want to remove?")
                 for player in self.players:
                     if player != current_player:
-                        if self.check_mill(player, piece_pos):
-                            print("Try another piece, that one is in a trio")
-                        else:
-
+                        if piece_pos in self.removable_piece(player):
                             selected_piece = Piece(piece_pos, player.name)
                             print(player.name)
                             player.pieces.remove(selected_piece)
                             self.node_list[piece_pos].figure = " "
                             self.node_list[piece_pos].empty = True
-                            self.print_board()
                             return msg
+                        else:
+                            print("Try another piece, that one is in a trio")
             except:
                 print("Not a valid location. Try Again!")
     
@@ -271,16 +280,16 @@ class Board(metaclass=Singleton):
 
 
     def print_scoreboard(self):
-        print("\t\t\t\t     ____________________________________________________")
-        print("\t\t\t\t    |                    ".ljust(60) + "|")
+        print("\t\t\t\t     _____________________________________")
+        print("\t\t\t\t    |                    ".ljust(45) + "|")
         print(
-            "\t\t\t\t    |    {} Has {} pieces on the board".format(self.players[0].name, self.players[0].pieces_left()).ljust(60,
+            "\t\t\t\t    |    {} Has {} pieces on the board".format(self.players[0].name, self.players[0].pieces_left()).ljust(45,
                                                                                                                      " ") + "|")
         print(
-            "\t\t\t\t    |    {} Has {} pieces on the board".format(self.players[1].name, self.players[1].pieces_left()).ljust(60,
+            "\t\t\t\t    |    {} Has {} pieces on the board".format(self.players[1].name, self.players[1].pieces_left()).ljust(45,
                                                                                                                      " ") + "|")
-        print("\t\t\t\t    |                    ".ljust(60) + "|")
-        print("\t\t\t\t    |___________________________________________________|")
+        print("\t\t\t\t    |                    ".ljust(45) + "|")
+        print("\t\t\t\t    |____________________________________|")
 
     #will return x which is the int converted from the coord_dict and raw_x which is the coordinate in the form A1
     def get_input(self,input_text):
