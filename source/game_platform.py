@@ -4,7 +4,6 @@ import os
 import sys
 from time import sleep
 import server
-import client
 from threading import Thread,Lock
 import socket, sys
 import time
@@ -12,6 +11,9 @@ import os
 import sys
 import socket
 import select
+
+#WE APOLOGIZE FOR THE CODE BEING IN ONE BIG FILE. 
+#This is becouse due to our limited lack of knowledge in python we had an issue with imports that we could not solve.
 
 # Classes---------------------------------------------------------------------------------------------------------------
 class Singleton(type):
@@ -243,12 +245,17 @@ class Board(metaclass=Singleton):
                 (piece_pos,msg) = self.get_input("Which piece do you want to remove?")
                 for player in self.players:
                     if player != current_player:
-                        selected_piece = Piece(piece_pos, player.name)
-                        print(player.name)
-                        player.pieces.remove(selected_piece)
-                        self.node_list[piece_pos].figure = " "
-                        self.node_list[piece_pos].empty = True
-                        return msg
+                        if self.check_mill(player, piece_pos):
+                            print("Try another piece, that one is in a trio")
+                        else:
+
+                            selected_piece = Piece(piece_pos, player.name)
+                            print(player.name)
+                            player.pieces.remove(selected_piece)
+                            self.node_list[piece_pos].figure = " "
+                            self.node_list[piece_pos].empty = True
+                            self.print_board()
+                            return msg
             except:
                 print("Not a valid location. Try Again!")
     
@@ -308,8 +315,11 @@ class Board(metaclass=Singleton):
 
     #Called by the client if it is the players turn
     def players_turn(self, player, online):
+
+
         if(online):
             self.online_game = True
+            player = self.players[0]
         what_stage = self.check_what_stage(player)
         if what_stage == 'stage1':
             msg = self.place_piece(player)
@@ -319,7 +329,6 @@ class Board(metaclass=Singleton):
             return 'MOV' + msg
         elif what_stage == 'stage3':
             msg = self.stage_3(player)
-            #self.get_winner()
             if(self.we_have_a_winner):
                 return 'FIN' + msg
             return 'MOV' + msg
@@ -426,10 +435,24 @@ class Board(metaclass=Singleton):
                         remove_msg = self.remove_piece(player)
                         if self.players[0].pieces_left() == 2 or self.players[1].pieces_left() == 2:
                             self.get_winner()
+                            self.clear_board()
                         return old_pos_msg + new_pos_msg + remove_msg
                     return old_pos_msg + new_pos_msg
             else:
                 print("That is not your piece")
+
+    def get_winner(self):
+        winner = ""
+        remaining_pieces = 0
+        self.we_have_a_winner = True
+        for player in self.players:
+            if player.pieces_left() > 2:
+                winner = player.name
+                remaining_pieces = player.pieces_left()
+
+        print("The winner is " + winner + "with " +
+          str(remaining_pieces) + " pieces remaining")
+
 
     def move_piece(self, player, piece, new_pos, is_stage_3):
         if self.valid_move(piece.pos, new_pos, is_stage_3):
@@ -455,6 +478,16 @@ class Board(metaclass=Singleton):
                 return True
             else:
                 return False
+        
+    def clear_board(self):
+        while len(self.node_list) > 0:
+            self.node_list.pop()
+        for i in range(0, self.number_of_nodes):
+            self.node_list.append(Coord(i, True, " "))
+
+        for player in self.players:
+            player.pieces = []
+
 
     def clear(self):
         os.system("cls")
@@ -647,6 +680,9 @@ def online_menu():
         client(address, 65432)
     elif choice == 'b':
         main_menu(False)
+    elif choice == 'q':
+        sys.exit()
+
 
 
 #Code related to accesing the menu and playing a local game-------------------------------------------------------------------
@@ -963,6 +999,7 @@ def client(hostIP, port):
                 if len(move) == 6:
                     print(move[2:])
                     print(move[0:2])
+
                     #get coord of the piece that is moving and remove from board
                     remove_own_coord = theBoard.convert_to_coord(move[0:2])
                     theBoard.opponent_remove_piece(remove_own_coord, 1)
@@ -986,6 +1023,7 @@ def client(hostIP, port):
                     theBoard.place_opponent(move_coord)
             
                 myMov = theBoard.players_turn(theBoard.players[0], True)
+                
                 #update our game board after we make a move
                 myMSG =  myMov + "|"
                 #Send my move
@@ -1014,6 +1052,8 @@ def client(hostIP, port):
                     remove_own_coord = theBoard.convert_to_coord(move[4:6])
                     theBoard.opponent_remove_piece(remove_own_coord, 0)
 
+                theBoard.clear_board()
+
 
                 print("Opponent says game is finished")
                 myResult = input("Did you win or not?(WIN, LOSS, TIE):")
@@ -1031,5 +1071,5 @@ def client(hostIP, port):
 
 #Creates a board object and displays the main menu 
 theBoard = Board(9,24)
-print_title()
+#print_title()
 main_menu(False)
